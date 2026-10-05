@@ -3,7 +3,7 @@
   "functions": {
     "index.py": {
       "maxDuration": 60,
-      "excludeFiles": "{public/**,tests/**,docs/**,package.json,package-lock.json}"
+      "excludeFiles": "{public/**,tests/**,package.json,package-lock.json}"
     }
   }
 }

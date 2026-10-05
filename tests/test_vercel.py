@@ -18,6 +18,7 @@ class VercelPackagingTests(unittest.TestCase):
         function = config["functions"]["index.py"]
         self.assertGreaterEqual(function["maxDuration"], 30)
         self.assertIn("public/**", function["excludeFiles"])
+        self.assertNotIn("docs/**", function["excludeFiles"])
 
     def test_static_assets_are_in_vercel_public_directory(self):
         self.assertTrue((ROOT / "public" / "static" / "dashboard.css").is_file())
