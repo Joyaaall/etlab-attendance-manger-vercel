@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173f35">
+  <meta name="description" content="A private Etlab attendance dashboard and timetable-based leave calculator.">
+  <title>Attendance Manager — Etlab</title>
+  <link rel="icon" href="/static/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <script type="module" src="/static/dashboard.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <section id="login-screen" class="login-layout" aria-label="Sign in">
+    <div class="login-story">
+      <a class="wordmark light" href="/" aria-label="Attendance Manager home"><span class="brand-mark" aria-hidden="true">a.</span>Attendance Manager<span class="wordmark-tag">ETLAB</span></a>
+      <div class="story-copy">
+        <h1>can I Get a<br>social <em>LIFE!!</em></h1>
+      </div>
+      <div class="story-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><div class="art-stamp">CHECK THE HOURS.<br>NOT JUST THE NUMBER.</div><span class="art-cross cross-one">+</span><span class="art-cross cross-two">+</span></div>
+      <div class="story-bottom"><span>Built for your college week.</span></div>
+    </div>
+    <div class="login-side">
+      <div class="login-top"><span class="small-label">STUDENT WORKSPACE</span></div>
+      <div class="login-card">
+        <div id="portal-step">
+          <p class="eyebrow">01 / YOUR COLLEGE</p>
+          <h2>Find your Etlab.</h2>
+          <p class="muted login-intro">Enter the Etlab address your college gave you. You can leave out <strong>https://</strong>.</p>
+          <form id="portal-form">
+            <label for="portal-url">College Etlab address</label>
+            <input id="portal-url" name="portal_url" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" required placeholder="college.etlab.app">
+            <p id="portal-error" class="form-error" role="alert" hidden></p>
+            <button id="portal-submit" class="button primary login-submit" type="submit"><span>Continue securely</span><span aria-hidden="true">↗</span></button>
+          </form>
+        </div>
+        <div id="credentials-step" hidden>
+          <p class="eyebrow">02 / SIGN IN</p>
+          <h2>Welcome back.</h2>
+          <div class="selected-portal"><span><small>COLLEGE PORTAL</small><strong id="selected-portal-host">—</strong></span><button id="change-portal" type="button" class="quiet-button">Change</button></div>
+          <p class="muted login-intro">Sign in with the username and password for this Etlab portal.</p>
+          <form id="login-form" method="post" action="/api/login">
+            <label for="username">Etlab username</label>
+            <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Your student username" maxlength="150">
+            <label for="password">Password</label>
+            <div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your Etlab password"><button id="toggle-password" type="button" class="reveal-button" aria-label="Show password" aria-pressed="false">Show</button></div>
+            <p id="login-error" class="form-error" role="alert" hidden></p>
+            <button id="login-submit" class="button primary login-submit" type="submit"><span>Open my dashboard</span><span aria-hidden="true">↗</span></button>
+          </form>
+          <div class="privacy-note"><span class="privacy-dot" aria-hidden="true"></span><p>Your password is never saved. Your session stays in memory and is cleared when you refresh or sign out.</p></div>
+        </div>
+      </div>
+      <div class="login-footer"><span>ETLAB / STUDENT WORKSPACE</span><a class="support-link" href="https://buymeacoffee.com/joyalaliyas" target="_blank" rel="noopener noreferrer">Buy me a coffee ↗</a></div>
+    </div>
+  </section>
+
+  <div id="workspace" class="workspace" hidden>
+    <header class="app-header">
+      <a class="wordmark" href="/" aria-label="Attendance Manager home"><span class="brand-mark" aria-hidden="true">a.</span>Attendance Manager<span class="wordmark-tag" id="workspace-portal-tag">ETLAB</span></a>
+      <nav class="app-nav" aria-label="Workspace"><button type="button" data-view="attendance" class="nav-link active" aria-current="page">Attendance</button><button type="button" data-view="timetable" class="nav-link">My timetable</button><button type="button" data-view="planner" class="nav-link">Leave planner</button></nav>
+      <div class="account-actions"><span id="account-initials" class="avatar" aria-hidden="true">—</span><button id="logout-button" type="button" class="quiet-button">Sign out ↗</button></div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <section class="workspace-heading">
+        <div><p class="eyebrow" id="profile-line">ETLAB / STUDENT WORKSPACE</p><h1 id="greeting">Your attendance, <em>at a glance.</em></h1><p class="muted" id="snapshot-line">Pulling the latest recorded hours from Etlab…</p></div>
+        <div class="workspace-controls"><label class="compact-field" for="semester"><span>Semester</span><select id="semester" aria-label="Semester"></select></label><button id="refresh-button" type="button" class="button secondary">↻ Refresh</button></div>
+      </section>
+      <div id="workspace-error" class="notice error-notice" role="alert" hidden></div>
+      <div id="workspace-note" class="notice" role="status" hidden></div>
+
+      <div class="control-ribbon">
+        <div class="target-control"><label for="target">My attendance target</label><div class="number-field"><input id="target" type="number" value="75" min="1" max="100" step="0.01" inputmode="decimal" aria-describedby="target-help"><span>%</span></div><span id="target-help" class="ribbon-help">Calculator setting, not an official policy.</span></div>
+      </div>
+
+      <section id="attendance-view" class="view-panel" aria-label="Subject attendance">
+        <div class="dashboard-grid">
+          <div class="attendance-main">
+            <div class="section-heading"><div><p class="eyebrow">01 / THE REGISTER</p><h2>Every subject. <em>Every hour.</em></h2></div><span id="subject-count" class="small-label">Loading subjects</span></div>
+            <div class="table-toolbar"><label class="search-box" for="subject-search"><span aria-hidden="true">⌕</span><input id="subject-search" type="search" placeholder="Find a subject or code" autocomplete="off"></label><label class="sr-only" for="subject-filter">Filter subjects</label><select id="subject-filter"><option value="all">All subjects</option><option value="below">Below target</option><option value="available">Hours to spare</option></select></div>
+            <div id="attendance-loading" class="loading-state" role="status"><span class="loading-line"></span><span>Reading your Etlab register…</span></div>
+            <div class="table-scroll"><table class="attendance-table"><caption class="sr-only">Per-subject attendance and hours you can miss at your selected target</caption><thead><tr><th scope="col">Subject</th><th scope="col">Attendance</th><th scope="col">Recorded hours</th><th scope="col">Your room to move</th></tr></thead><tbody id="subject-rows"></tbody></table></div>
+            <div id="subjects-empty" class="empty-state" hidden><h3>No subjects to show.</h3><p id="subjects-empty-message">Choose a semester or try refreshing your Etlab data.</p></div>
+            <p class="table-footnote">Hour budgets are independent per subject. A zero-hour subject is unknown, never a green light to skip.</p>
+          </div>
+          <aside class="summary-panel" aria-label="Attendance summary">
+            <p class="eyebrow">YOUR POSITION</p><h2>A clear picture.</h2>
+            <div class="overall-score"><span id="overall-percentage">—</span><span>overall recorded<br>attendance</span></div>
+            <div class="summary-rule"></div>
+            <dl class="summary-list"><div><dt>At or above target</dt><dd id="subjects-above">—</dd></div><div><dt>Need some attention</dt><dd id="subjects-below">—</dd></div><div><dt>Recorded hours</dt><dd id="recorded-hours">—</dd></div></dl>
+            <p class="summary-warning">The overall average isn’t your leave budget. Each subject needs to meet your chosen target.</p>
+            <button type="button" data-view="timetable" class="button primary summary-cta">Set up my week <span aria-hidden="true">↗</span></button>
+            <div class="summary-caption"><span class="status-dot"></span><span id="snapshot-status">Read-only Etlab connection</span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="timetable-view" class="view-panel" aria-label="Custom weekly timetable" hidden>
+        <div class="section-heading"><div><p class="eyebrow">02 / YOUR WEEK</p><h2>Put your week <em>in order.</em></h2><p class="muted section-copy">Assign one subject to each period. Double labs take two slots. Mark free periods explicitly.</p></div><div class="timetable-actions"><button id="import-timetable" type="button" class="button secondary">Import from Etlab</button><button id="save-timetable" type="button" class="button primary">Save my timetable ↗</button></div></div>
+        <div class="timetable-settings"><label class="compact-field" for="period-count"><span>Periods per day</span><select id="period-count"><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label><label class="compact-field" for="lunch-after"><span>Lunch after period</span><select id="lunch-after"></select></label><p>Afternoon leave skips every slot after this boundary. Saves stay in this browser, separately for your account and semester.</p></div>
+        <div id="timetable-save-status" class="save-status" role="status">Not saved yet</div>
+        <div class="timetable-scroll"><table class="timetable-table"><caption class="sr-only">Editable weekly timetable, one subject per attendance hour</caption><thead id="timetable-head"></thead><tbody id="timetable-body"></tbody></table></div>
+        <div class="timetable-bottom"><span>“Unassigned” blocks recommendations; it is not a free period.</span><button id="open-planner" type="button" data-view="planner" class="quiet-button">See my leave options ↗</button></div>
+      </section>
+
+      <section id="planner-view" class="view-panel" aria-label="Full-day and afternoon leave planner" hidden>
+        <div class="section-heading"><div><p class="eyebrow">03 / ROOM TO BREATHE</p><h2>Find a day. <em>Keep your margin.</em></h2><p class="muted section-copy">Check full days or leave after lunch. Select multiple days to check their combined impact.</p></div><label class="compact-field" for="plan-start"><span>Start date</span><input id="plan-start" type="date"></label></div>
+        <div class="planner-layout">
+          <div class="planner-main"><div class="planner-toolbar"><div class="planner-key"><span><i class="legend-dot safe-dot"></i>Within target</span><span><i class="legend-dot blocked-dot"></i>Not available</span></div><span class="small-label">NEXT 14 DAYS</span></div><div id="planner-empty" class="empty-state" hidden><h3>Your week needs a timetable.</h3><p>Assign your subjects and save the timetable first. We won’t guess which classes you have.</p><button type="button" data-view="timetable" class="button primary">Set my timetable ↗</button></div><div id="planner-days" class="planner-days"></div></div>
+          <aside class="plan-summary" aria-label="Combined leave impact"><p class="eyebrow">YOUR SHORTLIST</p><h2 id="plan-heading">No days selected.</h2><p class="muted" id="plan-description">Choose a full day or an afternoon. Every selection uses the same per-subject budget.</p><ul id="selected-plan" class="selected-plan"></ul><button id="clear-plan" type="button" class="quiet-button" hidden>Clear the shortlist</button><div id="plan-impact" class="plan-impact"></div><div class="planner-disclaimer"><h3>A calculation, not permission.</h3><p>Based on the recorded attendance snapshot and your saved timetable. Future attended classes are not credited. Check holidays, actual schedules, required labs, and college rules before taking leave.</p></div></aside>
+        </div>
+      </section>
+      <footer class="workspace-footer"><span id="workspace-footer-portal">ATTENDANCE MANAGER / ETLAB</span><span>Read the numbers. Make your own call.</span><a class="support-link" href="https://buymeacoffee.com/joyalaliyas" target="_blank" rel="noopener noreferrer">Buy me a coffee ↗</a></footer>
+    </main>
+  </div>
+
+  <dialog id="onboarding-dialog" class="onboarding-dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-description">
+    <div class="onboarding-visual" aria-hidden="true"><span class="onboarding-mark">a.</span><span id="onboarding-visual-label">COLLEGE</span><i></i><i></i><i></i></div>
+    <div class="onboarding-content">
+      <div class="onboarding-top"><span id="onboarding-progress" class="small-label">1 / 4</span><button id="onboarding-skip" type="button" class="quiet-button">Skip tutorial</button></div>
+      <p class="eyebrow">A QUICK TOUR</p>
+      <h2 id="onboarding-title">Start with your college portal.</h2>
+      <p id="onboarding-description" class="muted">Paste the Etlab link your college uses. With or without https:// works.</p>
+      <div class="onboarding-meter" aria-hidden="true"><span id="onboarding-meter-fill"></span></div>
+      <div class="onboarding-actions"><button id="onboarding-back" type="button" class="button secondary" hidden>Back</button><button id="onboarding-next" type="button" class="button primary">Next <span aria-hidden="true">↗</span></button></div>
+      <p class="onboarding-privacy">The tutorial is not tracked or saved, so it is available again on every visit.</p>
+    </div>
+  </dialog>
+  <dialog id="confirm-dialog" class="confirm-dialog"><form method="dialog"><p class="eyebrow">BEFORE YOU CONTINUE</p><h2 id="confirm-title">Replace your timetable?</h2><p id="confirm-description" class="muted"></p><div class="dialog-actions"><button value="cancel" class="button secondary">Keep my changes</button><button value="confirm" class="button primary">Continue</button></div></form></dialog>
+  <noscript><p class="notice">Attendance Manager needs JavaScript. Enable it in your browser to sign in.</p></noscript>
+</body>
+</html>

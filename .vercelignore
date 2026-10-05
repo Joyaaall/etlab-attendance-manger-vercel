@@ -1,0 +1,11 @@
+.git
+.vercel
+.venv
+__pycache__
+*.pyc
+.env
+.env.*
+!.env.example
+tests
+docs
+LICENSE.md
