@@ -20,6 +20,13 @@ class VercelPackagingTests(unittest.TestCase):
         self.assertIn("public/**", function["excludeFiles"])
         self.assertNotIn("docs/**", function["excludeFiles"])
 
+        ignored = {
+            line.strip()
+            for line in (ROOT / ".vercelignore").read_text().splitlines()
+            if line.strip() and not line.startswith("#")
+        }
+        self.assertNotIn("docs", ignored)
+
     def test_static_assets_are_in_vercel_public_directory(self):
         self.assertTrue((ROOT / "public" / "static" / "dashboard.css").is_file())
         self.assertTrue((ROOT / "public" / "static" / "dashboard.mjs").is_file())

@@ -7,5 +7,5 @@ __pycache__
 .env.*
 !.env.example
 tests
-docs
+/docs
 LICENSE.md
