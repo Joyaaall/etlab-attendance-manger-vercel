@@ -204,6 +204,8 @@ test('saving a custom timetable computes cumulative full-day and afternoon leave
     await page.locator('#save-timetable').click();
     assert.match(await page.locator('#timetable-save-status').innerText(), /Saved/);
     await page.locator('.app-nav [data-view="planner"]').click();
+    assert.equal(await page.locator('#plan-start').inputValue(), '2026-10-04');
+    assert.equal(await page.locator('[data-date="2026-10-04"]').count(), 2);
     await page.locator('#plan-start').fill('2026-11-02');
     await page.locator('#plan-start').dispatchEvent('change');
     const mondayFull = page.locator('[data-date="2026-11-02"][data-leave="full"]');

@@ -40,6 +40,10 @@ export function buildDates(startDateString, days = 14) {
   });
 }
 
+export function plannerStartDate(currentLocalDate) {
+  return buildDates(currentLocalDate, 1)[0].date;
+}
+
 export function evaluateLeave(subjects, slots, target = 75, alreadyMissed = {}) {
   const missed = {};
   const projections = {};

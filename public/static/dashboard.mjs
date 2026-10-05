@@ -1,5 +1,5 @@
 import { apiFetch, ApiError } from './api-client.mjs';
-import { calculateAttendance, evaluateLeave, buildDates, importTimetable } from './attendance-math.mjs';
+import { calculateAttendance, evaluateLeave, buildDates, importTimetable, plannerStartDate } from './attendance-math.mjs';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const $ = id => document.getElementById(id);
@@ -723,9 +723,9 @@ $('selected-plan').addEventListener('click', event => {
 });
 $('clear-plan').addEventListener('click', () => { state.selections.clear(); renderPlanner(); });
 $('plan-start').min = localDate();
-$('plan-start').value = buildDates(localDate(), 2)[1].date;
+$('plan-start').value = plannerStartDate(localDate());
 $('plan-start').addEventListener('change', () => {
-  if (!$('plan-start').value || $('plan-start').value < localDate()) { toast('Choose today or a future start date.'); $('plan-start').value = buildDates(localDate(), 2)[1].date; }
+  if (!$('plan-start').value || $('plan-start').value < localDate()) { toast('Choose today or a future start date.'); $('plan-start').value = plannerStartDate(localDate()); }
   state.selections.clear();
   renderPlanner();
 });

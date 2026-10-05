@@ -65,6 +65,11 @@ test('buildDates crosses month, leap day, year and DST as calendar days', () => 
   assert.deepEqual(domain.buildDates('2026-01-01',0),[]);
 });
 
+test('planner starts on the current local calendar day', () => {
+  assert.equal(typeof domain.plannerStartDate, 'function');
+  assert.equal(domain.plannerStartDate('2026-10-05'), '2026-10-05');
+});
+
 test('malformed slot values cannot be coerced into mapped subject codes', () => {
   const subjects = {'1':{present:8,total:8}, 'null':{present:8,total:8},
     'undefined':{present:8,total:8}, '[object Object]':{present:8,total:8}};
