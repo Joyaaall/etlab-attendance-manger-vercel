@@ -29,6 +29,7 @@ class FrontendTests(unittest.TestCase):
         self.assertIn('autocomplete="current-password"', html)
         self.assertIn('href="/static/dashboard.css"', html)
         self.assertIn('src="/static/dashboard.mjs"', html)
+        self.assertIn('src="/_vercel/insights/script.js"', html)
         self.assertNotIn('https://fonts.googleapis.com', html)
         self.assertIn("no-store", result.headers["Cache-Control"])
         self.assertIn("frame-ancestors 'none'", result.headers["Content-Security-Policy"])
