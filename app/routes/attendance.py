@@ -38,7 +38,7 @@ def attendance():
         "User-Agent": Config.USER_AGENT,
     }
     response = requests.get(
-        upstream_url(f"/ktuacademics/student/viewattendancesubject/{semester}"),
+        upstream_url(f"/ktuacademics/student/viewattendancesubjectdutyleave/{semester}"),
         headers=headers,
         cookies=authenticated_cookie_jar(),
         timeout=Config.REQUEST_TIMEOUT,
@@ -61,12 +61,23 @@ def attendance():
     response_body["roll_no"] = table_data[1].text
     response_body["name"] = table_data[2].text
 
-    for i in range(3, len(table_data) - 2):
+    summary_headers = {"total", "duty leave", "percentage", "duty leave percentage"}
+    header_names = [header.get_text(" ", strip=True).lower() for header in table_headers]
+    subject_indexes = [
+        i for i in range(3, len(table_data)) if header_names[i] not in summary_headers
+    ]
+
+    for i in subject_indexes:
         subject_code = table_headers[i].text.strip()
         attendance_str = table_data[i].text.strip()
-        present_hours = attendance_str.split("/")[0].strip()
-        total_hours = attendance_str.split("/")[1].split("(")[0].strip()
-        attendance_percentage = re.search(r"\((.*?)\)", attendance_str).group(1).strip()
+        attendance_match = re.search(
+            r"(\d+)\s*/\s*(\d+)\s*\(\s*([^)]*%?)\s*\)", attendance_str
+        )
+        if not attendance_match:
+            return jsonify({"message": "Unexpected Etlab attendance page structure."}), 502
+        present_hours, total_hours, attendance_percentage = (
+            value.strip() for value in attendance_match.groups()
+        )
 
         subject_attendance = {}
         subject_attendance["present_hours"] = present_hours
@@ -85,13 +96,34 @@ def attendance():
 
         response_body[subject_code] = subject_attendance
 
-    response_body["total_present_hours"] = (
-        table_data[len(table_data) - 2].text.split("/")[0].strip()
+    try:
+        total_index = header_names.index("total")
+        percentage_index = header_names.index("percentage")
+    except ValueError:
+        return jsonify({"message": "Unexpected Etlab attendance page structure."}), 502
+
+    total_match = re.search(r"(\d+)\s*/\s*(\d+)", table_data[total_index].get_text(" ", strip=True))
+    if not total_match:
+        return jsonify({"message": "Unexpected Etlab attendance page structure."}), 502
+    total_present, total_hours = total_match.groups()
+
+    duty_leave_hours = "0"
+    if "duty leave" in header_names:
+        duty_leave_index = header_names.index("duty leave")
+        duty_leave_match = re.search(r"\d+", table_data[duty_leave_index].get_text(" ", strip=True))
+        if duty_leave_match:
+            duty_leave_hours = duty_leave_match.group()
+        total_present = str(min(int(total_hours), int(total_present) + int(duty_leave_hours)))
+
+    adjusted_percentage_index = (
+        header_names.index("duty leave percentage")
+        if "duty leave percentage" in header_names
+        else percentage_index
     )
-    response_body["total_hours"] = (
-        table_data[len(table_data) - 2].text.split("/")[1].split("(")[0].strip()
-    )
-    response_body["total_percentage"] = table_data[len(table_data) - 1].get_text(strip=True)
+    response_body["total_present_hours"] = total_present
+    response_body["total_hours"] = total_hours
+    response_body["total_percentage"] = table_data[adjusted_percentage_index].get_text(strip=True)
+    response_body["duty_leave_hours"] = duty_leave_hours
     response_body["total_perecentage"] = response_body["total_percentage"]
 
     return jsonify(response_body), 200

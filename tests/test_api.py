@@ -90,6 +90,25 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(result.json["total_hours"], "10")
         self.assertEqual(result.json["total_percentage"], "80%")
 
+    def test_attendance_uses_duty_leave_register_and_adjusted_totals(self):
+        html = '''<title>Attendance with Duty Leave</title><table class="items"><tr>
+        <th>Reg</th><th>Roll</th><th>Name</th><th>CST501</th><th>Total</th>
+        <th>Duty Leave</th><th>Percentage</th><th>Duty Leave Percentage</th>
+        </tr><tr><td>REG</td><td>1</td><td>Example</td><td>9/10 (90%)</td>
+        <td>8/10</td><td>1</td><td>80%</td><td>90%</td></tr></table>'''
+        with patch("requests.get", return_value=response(html)) as get:
+            result = self.client.get("/api/attendance?semester=5", headers=self.auth)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(
+            get.call_args.args[0],
+            "https://asiet.etlab.app/ktuacademics/student/viewattendancesubjectdutyleave/5",
+        )
+        self.assertEqual(result.json["CST501"]["present_hours"], "9")
+        self.assertEqual(result.json["total_present_hours"], "9")
+        self.assertEqual(result.json["total_hours"], "10")
+        self.assertEqual(result.json["total_percentage"], "90%")
+        self.assertEqual(result.json["duty_leave_hours"], "1")
+
     def test_attendance_preserves_subject_header_names_including_zero_hours(self):
         html = '''<title>Attendance</title><table class="items"><tr>
         <th>Reg</th><th>Roll</th><th>Name</th>
