@@ -38,6 +38,16 @@ class VercelPackagingTests(unittest.TestCase):
         application = create_app()
         self.assertIsNone(application.static_folder)
 
+    def test_local_development_app_serves_static_assets(self):
+        from app import create_app
+
+        application = create_app(serve_static=True)
+        response = application.test_client().get("/static/dashboard.css")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"--cobalt", response.data)
+        analytics = application.test_client().get("/_vercel/insights/script.js")
+        self.assertEqual(analytics.status_code, 204)
+
     def test_vercel_requires_a_stable_token_secret(self):
         from config import deployment_token_secret
 

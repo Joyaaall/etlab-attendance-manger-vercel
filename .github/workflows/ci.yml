@@ -31,3 +31,31 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:unit
+
+  browser-tests:
+    runs-on: ubuntu-latest
+    env:
+      ETLAB_TOKEN_SECRET: test-only-secret-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: pip install -r requirements.txt
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start the local application
+        run: |
+          python dev.py > /tmp/attendance-manager.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:5001/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/attendance-manager.log
+          exit 1
+      - run: npm run test:browser

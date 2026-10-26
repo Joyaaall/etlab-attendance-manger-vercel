@@ -1,12 +1,23 @@
+from pathlib import Path
+
 from flask import Flask, jsonify, request
 from requests.exceptions import RequestException, Timeout
 from config import Config
 
 
-def create_app():
-    app = Flask(__name__, static_folder=None)
+def create_app(*, serve_static=False):
+    static_folder = None
+    if serve_static:
+        static_folder = str(Path(__file__).resolve().parents[1] / "public" / "static")
+
+    app = Flask(__name__, static_folder=static_folder, static_url_path="/static")
 
     app.config.from_object(Config)
+
+    if serve_static:
+        @app.get("/_vercel/insights/script.js")
+        def local_analytics_stub():
+            return "", 204
 
     @app.after_request
     def protect_browser_responses(response):

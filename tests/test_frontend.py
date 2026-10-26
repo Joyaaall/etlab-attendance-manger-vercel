@@ -36,7 +36,7 @@ class FrontendTests(unittest.TestCase):
 
     def test_dashboard_branding_and_removed_interface_elements(self):
         html = self.client.get("/").get_data(as_text=True)
-        self.assertIn('<title>Attendance Manager — Etlab</title>', html)
+        self.assertIn('<title>Attendance Manager for Etlab</title>', html)
         self.assertEqual(html.count('aria-label="Attendance Manager home"'), 2)
         self.assertNotIn('rollcall', html.lower())
         self.assertNotIn('ETLAB × ASIET', html)
@@ -45,7 +45,7 @@ class FrontendTests(unittest.TestCase):
         self.assertNotIn('Use this private instance over Tailscale or HTTPS.', html)
         self.assertNotIn('id="formula-button"', html)
         self.assertNotIn('id="formula-note"', html)
-        self.assertIn('can I Get a<br>social <em>LIFE!!</em>', html)
+        self.assertIn('Can I take a<br>day <em>OFF?</em>', html)
         self.assertNotIn('Show up.<br>Make room<br>for <em>life.</em>', html)
         for removed_copy in [
             'Less guesswork. Better plans.',

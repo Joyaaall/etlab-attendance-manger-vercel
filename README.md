@@ -51,6 +51,8 @@ Review the implementation before deploying it for other users. Public deployment
 ├── public/static/        # Browser JavaScript, CSS, fonts, and icon
 ├── tests/                # Python, Node, and Playwright tests
 ├── config.py             # Runtime configuration
+├── dev.py                # Local app and static-asset server
+├── DESIGN.md             # Margin Club interface system
 ├── index.py              # Vercel/Flask entrypoint
 ├── requirements.txt      # Python dependencies
 └── vercel.json           # Vercel function configuration
@@ -62,7 +64,7 @@ Review the implementation before deploying it for other users. Public deployment
 
 - Python 3.12
 - Node.js 20 or newer for JavaScript tests
-- Vercel CLI for the complete frontend development environment
+- A Chromium-compatible browser for Playwright tests
 
 ### Install Python dependencies
 
@@ -79,7 +81,13 @@ cp .env.example .env
 python3.12 -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Copy the generated value into `.env` as `ETLAB_TOKEN_SECRET`. Never commit `.env` or use the example's empty value in production.
+Copy the generated value into `.env` as `ETLAB_TOKEN_SECRET`. Never commit `.env` or use the example's empty value in production. Load the file into your shell before starting the local app:
+
+```bash
+set -a
+source .env
+set +a
+```
 
 Available variables:
 
@@ -92,12 +100,13 @@ Available variables:
 
 ### Run locally
 
-Flask intentionally does not serve files from `public/`; Vercel serves them at `/static/*`. Use the Vercel development server for the complete application:
+Start the local Flask application and static-asset server:
 
 ```bash
-npm install --global vercel
-vercel dev
+npm run dev
 ```
+
+Open `http://127.0.0.1:5001/`. The local entrypoint serves the same files that Vercel publishes from `public/static`; the production entrypoint leaves those assets to Vercel's CDN.
 
 ## Tests
 
@@ -114,12 +123,12 @@ Run the dependency-free JavaScript unit tests:
 npm run test:unit
 ```
 
-Run the browser tests after installing Playwright and starting Vercel on port `5001`:
+Run the browser tests after installing Playwright and starting the local app on port `5001`:
 
 ```bash
-npm install
+npm ci
 npx playwright install chromium
-vercel dev --listen 5001
+npm run dev
 ```
 
 Then, in another terminal:
@@ -157,4 +166,4 @@ Issues and pull requests are welcome. Do not include real credentials, session t
 
 ## License
 
-Licensed under the GNU General Public License v3.0. See `LICENSE.md`.
+Licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE).

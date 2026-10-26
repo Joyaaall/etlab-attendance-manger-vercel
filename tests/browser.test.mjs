@@ -76,10 +76,10 @@ async function signIn(page) {
   await page.locator('#subject-rows tr').first().waitFor({ timeout: 5000 });
 }
 
-async function capture(page, name) {
+async function capture(page, name, { fullPage = true } = {}) {
   if (!process.env.CAPTURE_SCREENSHOTS) return;
   await mkdir('test-results', { recursive: true });
-  await page.screenshot({ path: `test-results/${name}.png`, fullPage: true, animations: 'disabled' });
+  await page.screenshot({ path: `test-results/${name}.png`, fullPage, animations: 'disabled' });
 }
 
 test('onboarding can be skipped and returns on every fresh visit without tracking', async () => {
@@ -125,7 +125,7 @@ test('onboarding is styled and contained on a short tablet viewport', async () =
     assert.equal(layout.display, 'grid');
     assert.match(layout.columns, /^270px /);
     assert.equal(layout.radius, '14px');
-    assert.equal(layout.visualBackground, 'rgb(23, 63, 53)');
+    assert.equal(layout.visualBackground, 'rgb(23, 70, 209)');
     assert.equal(layout.insideViewport, true);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
@@ -134,7 +134,7 @@ test('onboarding is styled and contained on a short tablet viewport', async () =
 test('username login reaches per-subject attendance, and no credentials are persisted', async () => {
   const { context, page, requests, errors } = await openFixture();
   try {
-    assert.equal(await page.title(), 'Attendance Manager — Etlab');
+    assert.equal(await page.title(), 'Attendance Manager for Etlab');
     assert.equal(await page.locator('a[href*="apidocs"], #formula-button, #formula-note, .connection-note').count(), 0);
     assert.match(await page.locator('#login-screen .wordmark').innerText(), /Attendance Manager/);
     await signIn(page);
@@ -220,11 +220,13 @@ test('saving a custom timetable computes cumulative full-day and afternoon leave
     assert.equal(await page.locator('[data-date="2026-11-09"][data-leave="afternoon"]').isEnabled(), true);
     await page.locator('[data-date="2026-11-09"][data-leave="afternoon"]').click();
     assert.match(await page.locator('#plan-impact').innerText(), /75/);
+    assert.match(await page.locator('#plan-heading').innerText(), /at or above target/i);
     assert.equal(await page.locator('#selected-plan li').count(), 2);
-    await capture(page, 'desktop-planner-synthetic');
+    await page.evaluate(() => scrollTo(0, 0));
+    await capture(page, 'desktop-planner-synthetic', { fullPage: false });
     await page.locator('#target').fill('90');
     await page.locator('#target').dispatchEvent('change');
-    assert.match(await page.locator('#plan-heading').innerText(), /exceeds|outside|over/i);
+    assert.match(await page.locator('#plan-heading').innerText(), /below target/i);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });
@@ -267,8 +269,14 @@ test('mobile layout fits the viewport and keyboard navigation remains available'
     await signIn(page);
     await capture(page, 'mobile-attendance-synthetic');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const mobileBudget = await page.locator('.attendance-table td:nth-child(4)').first().boundingBox();
+    assert.ok(mobileBudget && mobileBudget.x >= 0 && mobileBudget.x + mobileBudget.width <= 390);
+    await page.locator('#target').focus();
+    assert.notEqual(await page.locator('.number-field').evaluate(element => getComputedStyle(element).outlineStyle), 'none');
     await page.locator('.app-nav [data-view="timetable"]').click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const clearDay = await page.locator('[data-clear-day="monday"]').boundingBox();
+    assert.ok(clearDay && clearDay.height >= 44);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     assert.deepEqual(errors, []);
   } finally { await context.close(); }

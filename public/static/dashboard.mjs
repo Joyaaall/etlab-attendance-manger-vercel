@@ -10,10 +10,10 @@ const emptyWeek = periods => Object.fromEntries(DAYS.map(day => [day, Array(peri
 const cloneWeek = week => Object.fromEntries(DAYS.map(day => [day, [...week[day]]]));
 const localDate = () => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const ONBOARDING_STEPS = [
-  { label: 'COLLEGE', title: 'Start with your college portal.', description: 'Paste the Etlab link your college uses. With or without https:// works.' },
-  { label: 'PRIVATE', title: 'Sign in without leaving credentials behind.', description: 'Your password is used only for login. The Etlab session stays in memory and clears when you refresh or sign out.' },
-  { label: 'REGISTER', title: 'See the real margin for every subject.', description: 'Attendance Manager reads recorded hours and calculates exactly how many additional periods each subject can afford.' },
-  { label: 'PLANNER', title: 'Turn your timetable into a leave plan.', description: 'Set or import your week, then compare complete-day and after-lunch leave using one shared attendance budget.' },
+  { label: 'COLLEGE', title: 'Choose your college portal.', description: "Paste your college's Etlab address. It works with or without https://." },
+  { label: 'PRIVATE', title: 'Sign in like you normally do.', description: 'We use your password to log in, then clear it. Refreshing or signing out clears the session too.' },
+  { label: 'SUBJECTS', title: 'Check every subject.', description: 'See how many classes you can miss, or how many you need to attend to get back above your target.' },
+  { label: 'PLANNER', title: 'Try a day off before you take it.', description: 'Add your timetable, pick a date, and see how the missed classes would change each subject.' },
 ];
 const state = {
   token: null, portalUrl: null, portalHost: null, profile: null, semester: null, target: 75, subjects: Object.create(null), names: Object.create(null),
@@ -46,7 +46,7 @@ function renderOnboarding() {
   $('onboarding-visual-label').textContent = step.label;
   $('onboarding-meter-fill').style.width = `${(onboardingStep + 1) / ONBOARDING_STEPS.length * 100}%`;
   $('onboarding-back').hidden = onboardingStep === 0;
-  $('onboarding-next').firstChild.textContent = onboardingStep === ONBOARDING_STEPS.length - 1 ? 'Start exploring ' : 'Next ';
+  $('onboarding-next').firstChild.textContent = onboardingStep === ONBOARDING_STEPS.length - 1 ? 'Got it ' : 'Next ';
 }
 function closeOnboarding() {
   const dialog = $('onboarding-dialog');
@@ -59,7 +59,7 @@ function key(suffix = '') {
 function setDirty(value = true) {
   state.dirty = value;
   $('timetable-save-status').classList.toggle('dirty', value);
-  $('timetable-save-status').textContent = value ? 'Unsaved changes — the planner still uses your last saved week.' : state.saved ? 'Saved in this browser · account and semester specific' : 'Not saved yet — unassigned slots are not free periods.';
+  $('timetable-save-status').textContent = value ? 'You have unsaved changes. The planner is still using your last saved timetable.' : state.saved ? 'Saved in this browser for this account and semester.' : 'Not saved yet. Unassigned slots are not treated as free periods.';
 }
 function showView(view) {
   if (!['attendance', 'timetable', 'planner'].includes(view)) return;
@@ -79,7 +79,7 @@ function setLoading(value) {
   $('attendance-loading').hidden = !value;
   $('refresh-button').disabled = value;
   $('semester').disabled = value;
-  $('refresh-button').textContent = value ? 'Reading Etlab…' : '↻ Refresh';
+  $('refresh-button').textContent = value ? 'Getting attendance...' : 'Refresh data';
 }
 function showPortalStep() {
   $('portal-step').hidden = false;
@@ -124,7 +124,7 @@ function resetSession(message = '') {
   $('plan-impact').replaceChildren();
   notice('login-error', message);
   $('login-submit').disabled = false;
-  $('login-submit').firstElementChild.textContent = 'Open my dashboard';
+  $('login-submit').firstElementChild.textContent = 'Show my attendance';
   announce(message || 'Signed out.');
 }
 async function request(path, options = {}) {
@@ -142,7 +142,7 @@ function renderAccount() {
   $('profile-line').textContent = `${name} / ${profile.university_roll_no || profile.admission_no || state.portalHost || 'ETLAB'}`;
   $('workspace-portal-tag').textContent = (state.portalHost || 'ETLAB').split('.')[0].toUpperCase().slice(0, 16);
   $('workspace-footer-portal').textContent = `ATTENDANCE MANAGER / ${state.portalHost || 'ETLAB'}`;
-  $('greeting').replaceChildren(document.createTextNode('Your attendance, '), node('em', '', 'at a glance.'));
+  $('greeting').textContent = 'Here is where you stand.';
 }
 function updateSubjectNames() {
   state.names = Object.create(null);
@@ -194,7 +194,7 @@ function restoreTimetable() {
     }
     const preferences = JSON.parse(localStorage.getItem(key('.preferences')) || 'null');
     if (preferences && validTarget(preferences.target)) state.target = preferences.target;
-  } catch { toast('Saved settings could not be read. Nothing has been assumed about your timetable.'); }
+  } catch { toast('We could not read your saved settings, so the timetable starts blank.'); }
   $('target').value = state.target;
   $('period-count').value = state.periods;
   setDirty(false);
@@ -227,7 +227,7 @@ function renderAttendance() {
     const row = node('tr', 'subject-row');
     row.dataset.subject = code;
     const subjectCell = node('td');
-    subjectCell.append(node('span', 'subject-code', code), node('span', 'subject-name', state.names[code] || 'Subject name not supplied by this register'));
+    subjectCell.append(node('span', 'subject-code', code), node('span', 'subject-name', state.names[code] || 'Etlab did not include a subject name'));
     const attendanceCell = node('td');
     attendanceCell.append(node('div', 'percentage-value', percent(result.percentage)));
     const bar = node('div', `percentage-bar ${result.status}`);
@@ -238,18 +238,18 @@ function renderAttendance() {
     attendanceCell.append(bar);
     const hoursCell = node('td');
     const hours = node('span', 'hours-value', Number.isSafeInteger(subject.present) && Number.isSafeInteger(subject.total) ? `${subject.present} / ${subject.total}` : '—');
-    hours.append(node('small', '', 'present / conducted'));
+    hours.append(node('small', '', 'attended / held'));
     hoursCell.append(hours);
     const budgetCell = node('td');
     let budget;
     let description;
-    if (!result.valid) { budget = 'Unknown'; description = 'No valid recorded hours yet'; }
+    if (!result.valid) { budget = 'Unknown'; description = 'No attendance has been recorded yet'; }
     else if (result.status === 'below') {
       budget = result.attendHours === null ? 'Cannot reach 100%' : `Attend ${result.attendHours} ${result.attendHours === 1 ? 'hour' : 'hours'}`;
-      description = result.attendHours === null ? 'Previous absences remain in the denominator' : `Consecutive attended hours to reach ${state.target}%`;
+      description = result.attendHours === null ? 'Past absences will always count in the total' : `Attend the next ${result.attendHours} ${result.attendHours === 1 ? 'class' : 'classes'} to reach ${state.target}%`;
     } else {
       budget = `${result.skipHours} ${result.skipHours === 1 ? 'hour' : 'hours'} to spare`;
-      description = result.skipHours ? 'Maximum additional missed periods' : 'No additional missed periods at this target';
+      description = result.skipHours ? 'Maximum classes you can miss right now' : 'Missing another class would put you below target';
     }
     budgetCell.append(node('span', `budget-badge ${result.status}`, budget), node('span', 'budget-description', description));
     row.append(subjectCell, attendanceCell, hoursCell, budgetCell);
@@ -257,7 +257,7 @@ function renderAttendance() {
   }
   $('subject-rows').replaceChildren(fragment);
   $('subjects-empty').hidden = state.loading || displayed !== 0;
-  $('subjects-empty-message').textContent = entries.length ? 'No subjects match your search or filter.' : 'Choose a semester or refresh your Etlab data. Leave recommendations stay blocked until attendance is available.';
+  $('subjects-empty-message').textContent = entries.length ? 'Nothing matches that search or filter.' : 'Choose a semester or refresh your attendance before using the planner.';
   $('subject-count').textContent = `${entries.length} SUBJECT${entries.length === 1 ? '' : 'S'}`;
   $('subjects-above').textContent = entries.length ? above : '—';
   $('subjects-below').textContent = entries.length ? below : '—';
@@ -275,7 +275,7 @@ async function loadSemester({ keepTimetable = false } = {}) {
   renderAttendance();
   renderPlanner();
   notice('workspace-error');
-  $('snapshot-line').textContent = 'Reading your latest recorded hours…';
+  $('snapshot-line').textContent = 'Getting your latest attendance...';
   try {
     const data = await request(`/api/attendance?semester=${encodeURIComponent(requestedSemester)}`);
     if (generation !== state.generation || !state.token) return;
@@ -294,10 +294,10 @@ async function loadSemester({ keepTimetable = false } = {}) {
     renderTimetable();
     renderPlanner();
     const time = state.snapshot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    $('snapshot-line').textContent = `Semester ${state.semester} · Etlab snapshot refreshed at ${time}. Future classes are not included.`;
-    $('snapshot-status').textContent = `Last read ${time} · no Etlab records changed`;
-    if (!state.dataAvailable) notice('workspace-error', 'No per-subject attendance was returned. Planning is disabled for this snapshot.');
-    announce(`Attendance refreshed. ${Object.keys(state.subjects).length} subjects loaded.`);
+    $('snapshot-line').textContent = `Semester ${state.semester}. Last checked at ${time}. Classes that have not happened yet are not included.`;
+    $('snapshot-status').textContent = `Checked at ${time}. Your Etlab records were not changed.`;
+    if (!state.dataAvailable) notice('workspace-error', 'Etlab did not return attendance for any subjects, so the planner is unavailable.');
+    announce(`Attendance updated. ${Object.keys(state.subjects).length} subjects loaded.`);
     if (Object.keys(state.subjects).some(code => !state.names[code])) {
       void enrichSubjectNames(generation, requestedSemester);
     }
@@ -306,7 +306,7 @@ async function loadSemester({ keepTimetable = false } = {}) {
     state.dataAvailable = false;
     state.subjects = Object.create(null);
     notice('workspace-error', error.message);
-    $('snapshot-line').textContent = 'Attendance is unavailable. Refresh to retry; the planner will not use stale hours.';
+    $('snapshot-line').textContent = 'We could not load your attendance. Try refreshing. The planner will not use old data.';
     renderAttendance();
     renderPlanner();
   } finally {
@@ -343,8 +343,8 @@ async function bootstrap() {
   $('workspace').hidden = false;
   showView('attendance');
   const messages = [];
-  if (!state.semester) messages.push('Your current semester could not be discovered. Choose it above to load attendance.');
-  if (!state.imported) messages.push('The Etlab timetable could not be imported. You can still build your own week.');
+  if (!state.semester) messages.push('We could not detect your current semester. Choose one above to load attendance.');
+  if (!state.imported) messages.push('We could not import your Etlab timetable, but you can still build it here.');
   notice('workspace-note', messages.join(' '));
   if (state.semester) await loadSemester();
   else { setLoading(false); restoreTimetable(); renderAttendance(); renderPlanner(); }
@@ -395,13 +395,13 @@ function renderTimetable() {
       }
       const value = state.draft[day]?.[period] ?? '?';
       if (value && value !== '?' && !Object.hasOwn(state.subjects, value)) {
-        const stale = node('option', '', `${value} · no attendance data`);
+        const stale = node('option', '', `${value} (no attendance data)`);
         stale.value = value;
         select.append(stale);
       }
       select.value = value;
       select.className = value === '?' ? 'unassigned' : value === '' ? 'free' : 'assigned';
-      select.title = value === '?' ? 'Unassigned — blocks leave calculations' : value === '' ? 'Explicitly free period' : `${value}${state.names[value] ? ` · ${state.names[value]}` : ''}`;
+      select.title = value === '?' ? 'Unassigned. The planner cannot calculate leave for this slot.' : value === '' ? 'Free period' : `${value}${state.names[value] ? `: ${state.names[value]}` : ''}`;
       cell.append(select);
       row.append(cell);
     }
@@ -426,18 +426,18 @@ function missedCounts(slots) {
   return missed;
 }
 function blockerText(result) {
-  if (!result.hasClasses) return 'No scheduled classes in these slots.';
+  if (!result.hasClasses) return 'You have no classes in these slots.';
   return result.blockers.slice(0, 2).map(blocker => {
     const code = blocker.code === '?' ? 'Unassigned slot' : blocker.code;
     return Number.isFinite(blocker.projectedPercentage) ? `${code}: ${percent(blocker.projectedPercentage)} after leave (target ${state.target}%)` : `${code}: ${blocker.reason || 'attendance unavailable'}`;
-  }).join(' · ') || 'Outside the selected attendance target.';
+  }).join('. ') || 'This would put you below your attendance target.';
 }
 function renderPlanSummary() {
   const slots = selectedSlots();
   const result = evaluateLeave(state.subjects, slots, state.target);
   const selectionCount = state.selections.size;
-  $('plan-heading').textContent = !selectionCount ? 'No days selected.' : result.safe && state.dataAvailable ? `${selectionCount} ${selectionCount === 1 ? 'day' : 'days'}, within target.` : 'This plan exceeds your budget.';
-  $('plan-description').textContent = !selectionCount ? 'Choose a full day or an afternoon. Every selection uses the same per-subject budget.' : result.safe && state.dataAvailable ? 'Every affected subject stays at or above your target in this conservative combined calculation.' : 'Remove a day or change your plan. Your selected target or latest attendance no longer supports this shortlist.';
+  $('plan-heading').textContent = !selectionCount ? 'Nothing selected yet.' : result.safe && state.dataAvailable ? `${selectionCount} ${selectionCount === 1 ? 'day still keeps' : 'days still keep'} you at or above target.` : 'This would put you below target.';
+  $('plan-description').textContent = !selectionCount ? 'Pick a full day or an afternoon. The planner checks all selected dates together.' : result.safe && state.dataAvailable ? 'Every affected subject stays at or above your chosen percentage.' : 'Remove a date or change your plan. One or more subjects no longer have enough margin.';
   $('plan-heading').closest('.plan-summary').classList.toggle('invalid', selectionCount > 0 && (!result.safe || !state.dataAvailable));
   $('clear-plan').hidden = !selectionCount;
   const list = document.createDocumentFragment();
@@ -445,7 +445,7 @@ function renderPlanSummary() {
     const item = node('li');
     const label = node('span', '', new Date(`${date}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }));
     label.append(node('small', '', mode === 'full' ? 'Full day' : `After period ${state.saved?.lunch || state.lunch}`));
-    const remove = node('button', '', '×');
+    const remove = node('button', '', 'Remove');
     remove.type = 'button';
     remove.dataset.removeDate = date;
     remove.setAttribute('aria-label', `Remove leave on ${date}`);
@@ -458,7 +458,7 @@ function renderPlanSummary() {
     const projection = result.projections[code] || calculateAttendance(NaN, NaN, state.target);
     const row = node('div', 'impact-row');
     const detail = node('span', '', code);
-    detail.append(node('small', '', `${hours} ${hours === 1 ? 'period' : 'periods'} missed across your shortlist`));
+    detail.append(node('small', '', `${hours} ${hours === 1 ? 'class' : 'classes'} missed on the dates you picked`));
     const value = node('strong', projection.status === 'below' || !projection.valid ? 'impact-below' : '', percent(projection.projectedPercentage));
     row.append(detail, value);
     impacts.append(row);
@@ -468,8 +468,8 @@ function renderPlanSummary() {
 function renderPlanner() {
   $('planner-empty').hidden = !!state.saved && state.dataAvailable;
   $('planner-days').hidden = !state.saved || !state.dataAvailable;
-  $('planner-empty').querySelector('h3').textContent = !state.saved ? 'Your week needs a timetable.' : 'Attendance needs a fresh snapshot.';
-  $('planner-empty').querySelector('p').textContent = !state.saved ? 'Assign your subjects and save the timetable first. We won’t guess which classes you have.' : 'Load valid per-subject attendance before planning leave. Stale or missing data will not produce a recommendation.';
+  $('planner-empty').querySelector('h3').textContent = !state.saved ? 'Add your timetable first.' : 'Refresh your attendance first.';
+  $('planner-empty').querySelector('p').textContent = !state.saved ? 'The planner needs to know which classes fall on each day.' : 'We need current attendance for each subject before we can check a day off.';
   renderPlanSummary();
   if (!state.saved || !state.dataAvailable) { $('planner-days').replaceChildren(); return; }
   let dates;
@@ -495,7 +495,7 @@ function renderPlanner() {
       chip.title = `Period ${index + 1}${code !== '?' && state.names[code] ? ` · ${state.names[code]}` : ''}`;
       chips.append(chip);
     });
-    if (!hasAnyClass) chips.append(node('span', 'muted', 'No scheduled classes'));
+    if (!hasAnyClass) chips.append(node('span', 'muted', 'No classes scheduled'));
     classes.append(chips);
     const otherSlots = selectedSlots(date);
     const otherPlan = evaluateLeave(state.subjects, otherSlots, state.target);
@@ -506,18 +506,18 @@ function renderPlanner() {
     const options = node('div', 'day-options');
     for (const [mode, text, result] of [['full', 'Full day', full], ['afternoon', 'Afternoon', afternoon]]) {
       const selected = state.selections.get(date) === mode;
-      const button = node('button', 'leave-option', selected ? `✓ ${text}` : text);
+      const button = node('button', 'leave-option', selected ? `${text} selected` : text);
       button.type = 'button';
       button.dataset.date = date;
       button.dataset.leave = mode;
       button.setAttribute('aria-pressed', String(selected));
       button.setAttribute('aria-label', `${text} leave on ${date}`);
       button.disabled = !selected && (!result.safe || otherBlocked);
-      button.title = selected ? 'Click to remove this selection' : otherBlocked ? 'Another selected day is outside your current budget. Remove it first.' : result.safe ? `${text} stays within your target${state.selections.size ? ' alongside the other selected days' : ''}.` : blockerText(result);
+      button.title = selected ? 'Click again to remove this date' : otherBlocked ? 'Another selected date already puts you below target. Remove it first.' : result.safe ? `${text} keeps every subject at or above your target${state.selections.size ? ' when combined with the other dates' : ''}.` : blockerText(result);
       options.append(button);
     }
-    let message = !hasAnyClass ? 'No leave calculation needed for this day.' : full.safe && !otherBlocked ? 'Full day fits the current shared budget.' : afternoon.safe && !otherBlocked ? `Afternoon fits · full day blocked: ${blockerText(full)}` : blockerText(full);
-    if (otherBlocked) message = 'A selected day is outside your target. Remove it before adding more.';
+    let message = !hasAnyClass ? 'There are no classes to miss on this day.' : full.safe && !otherBlocked ? 'You can miss the full day and stay at or above target.' : afternoon.safe && !otherBlocked ? `The afternoon is okay. A full day is not: ${blockerText(full)}` : blockerText(full);
+    if (otherBlocked) message = 'One selected date already puts you below target. Remove it before adding another.';
     classes.append(node('p', `day-note${!full.safe && !afternoon.safe && hasAnyClass ? ' blocked' : ''}`, message));
     row.append(dateLabel, classes, options);
     fragment.append(row);
@@ -539,24 +539,24 @@ $('portal-form').addEventListener('submit', async event => {
   event.preventDefault();
   if ($('portal-submit').disabled) return;
   const supplied = $('portal-url').value.trim();
-  if (!supplied) { notice('portal-error', 'Enter your college Etlab address.'); return; }
+  if (!supplied) { notice('portal-error', 'Enter the Etlab address your college gave you.'); return; }
   notice('portal-error');
   $('portal-submit').disabled = true;
-  $('portal-submit').firstElementChild.textContent = 'Checking portal…';
+  $('portal-submit').firstElementChild.textContent = 'Checking this portal...';
   try {
     const result = await apiFetch('/api/portal/check', { body: { portal_url: supplied }, signal: state.requests.signal, timeoutMs: 25000 });
-    if (typeof result.portal_url !== 'string' || typeof result.hostname !== 'string') throw new ApiError('The server returned an invalid portal response.');
+    if (typeof result.portal_url !== 'string' || typeof result.hostname !== 'string') throw new ApiError('The portal check returned something we could not read. Try again.');
     state.portalUrl = result.portal_url;
     state.portalHost = result.hostname;
     $('portal-url').value = result.hostname;
     showCredentialsStep();
     $('username').focus();
-    announce(`${result.hostname} selected. Enter your Etlab credentials.`);
+    announce(`${result.hostname} is ready. Enter your Etlab login.`);
   } catch (error) {
-    notice('portal-error', error.message || 'Could not verify this Etlab portal.');
+    notice('portal-error', error.message || 'We could not confirm that this is an Etlab student portal.');
   } finally {
     $('portal-submit').disabled = false;
-    $('portal-submit').firstElementChild.textContent = 'Continue securely';
+    $('portal-submit').firstElementChild.textContent = 'Use this portal';
   }
 });
 $('change-portal').addEventListener('click', () => {
@@ -566,7 +566,7 @@ $('change-portal').addEventListener('click', () => {
   $('password').value = '';
   showPortalStep();
   $('portal-url').focus();
-  announce('Choose a different college Etlab portal.');
+  announce('Choose a different college portal.');
 });
 $('onboarding-skip').addEventListener('click', closeOnboarding);
 $('onboarding-back').addEventListener('click', () => {
@@ -583,20 +583,20 @@ $('login-form').addEventListener('submit', async event => {
   if ($('login-submit').disabled) return;
   const username = $('username').value.trim();
   const password = $('password').value;
-  if (!state.portalUrl) { showPortalStep(); notice('portal-error', 'Choose your college Etlab portal first.'); return; }
-  if (!username || !password) { notice('login-error', 'Enter your Etlab username and password.'); return; }
+  if (!state.portalUrl) { showPortalStep(); notice('portal-error', 'Choose your college portal first.'); return; }
+  if (!username || !password) { notice('login-error', 'Enter the username and password you use on Etlab.'); return; }
   const generation = ++state.generation;
   const credentials = { portal_url: state.portalUrl, username, password };
   notice('login-error');
   $('login-submit').disabled = true;
-  $('login-submit').firstElementChild.textContent = 'Connecting to Etlab…';
+  $('login-submit').firstElementChild.textContent = 'Signing in...';
   try {
     const promise = apiFetch('/api/login', { body: credentials, signal: state.requests.signal });
     $('password').value = '';
     credentials.password = '';
     const result = await promise;
     if (generation !== state.generation) return;
-    if (typeof result.token !== 'string' || !result.token.trim()) throw new ApiError('Etlab did not return a session. Please try again.');
+    if (typeof result.token !== 'string' || !result.token.trim()) throw new ApiError('Etlab did not finish signing you in. Try again.');
     if (typeof result.portal_url === 'string') {
       state.portalUrl = result.portal_url;
       state.portalHost = new URL(result.portal_url).hostname;
@@ -606,13 +606,13 @@ $('login-form').addEventListener('submit', async event => {
   } catch (error) {
     if (generation === state.generation && $('workspace').hidden) {
       state.token = null;
-      notice('login-error', error.message || 'Could not sign in. Please try again.');
+      notice('login-error', error.message || 'We could not sign you in. Check your details and try again.');
     }
   } finally {
     $('password').value = '';
     credentials.password = '';
     $('login-submit').disabled = false;
-    $('login-submit').firstElementChild.textContent = 'Open my dashboard';
+    $('login-submit').firstElementChild.textContent = 'Show my attendance';
   }
 });
 $('toggle-password').addEventListener('click', () => {
@@ -627,13 +627,13 @@ $('logout-button').addEventListener('click', async () => {
   resetSession();
   $('username').focus();
   try { await apiFetch('/api/logout', { token, timeoutMs: 25000 }); }
-  catch { toast('Local session cleared. If Etlab is unavailable, also log out of the portal to invalidate its session.'); }
+  catch { toast('You are signed out here. If Etlab is down, sign out on the Etlab site later too.'); }
 });
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 $('semester').addEventListener('change', async () => {
   const next = Number($('semester').value);
   if (!next || next === state.semester) return;
-  if (state.dirty && !await confirmAction('Switching semesters discards unsaved timetable changes. Your previously saved week stays in this browser.')) { $('semester').value = state.semester || ''; return; }
+  if (state.dirty && !await confirmAction('Changing semesters will discard the timetable edits you have not saved. Your last saved timetable will stay in this browser.')) { $('semester').value = state.semester || ''; return; }
   state.semester = next;
   state.selections.clear();
   state.saved = null;
@@ -645,9 +645,9 @@ $('subject-search').addEventListener('input', renderAttendance);
 $('subject-filter').addEventListener('change', renderAttendance);
 $('target').addEventListener('change', () => {
   const target = Number($('target').value);
-  if (!validTarget(target)) { $('target').value = state.target; toast('Choose a target from 1 to 100%, with at most two decimal places.'); return; }
+  if (!validTarget(target)) { $('target').value = state.target; toast('Enter a percentage from 1 to 100, with no more than two decimal places.'); return; }
   state.target = target;
-  try { if (state.profile && state.semester) localStorage.setItem(key('.preferences'), JSON.stringify({ target })); } catch { toast('Browser storage is unavailable. Your target still works in this session.'); }
+  try { if (state.profile && state.semester) localStorage.setItem(key('.preferences'), JSON.stringify({ target })); } catch { toast('Your browser could not save this target, but it will still work until you leave the page.'); }
   renderAttendance();
   renderPlanner();
   announce(`Attendance target changed to ${target} percent.`);
@@ -655,7 +655,7 @@ $('target').addEventListener('change', () => {
 
 $('period-count').addEventListener('change', async () => {
   const periods = Number($('period-count').value);
-  if (periods < state.periods && DAYS.some(day => state.draft[day].slice(periods).some(code => code !== '?')) && !await confirmAction('Reducing periods removes the slots at the end of each day. Save only when the shorter week is correct.')) { $('period-count').value = state.periods; return; }
+  if (periods < state.periods && DAYS.some(day => state.draft[day].slice(periods).some(code => code !== '?')) && !await confirmAction('Reducing the number of periods will remove the last slots from every day. Continue only if that matches your week.')) { $('period-count').value = state.periods; return; }
   state.draft = Object.fromEntries(DAYS.map(day => [day, Array.from({ length: periods }, (_, index) => state.draft[day][index] ?? '?')]));
   state.periods = periods;
   state.lunch = Math.min(state.lunch, periods - 1);
@@ -678,22 +678,22 @@ $('timetable-body').addEventListener('click', event => {
   renderTimetable();
 });
 $('save-timetable').addEventListener('click', () => {
-  if (!state.profile || !state.semester) { toast('Choose a semester before saving your timetable.'); return; }
+  if (!state.profile || !state.semester) { toast('Choose a semester before you save the timetable.'); return; }
   state.saved = { periods: state.periods, lunch: state.lunch, week: cloneWeek(state.draft) };
   try {
     localStorage.setItem(key('.timetable'), JSON.stringify(state.saved));
     setDirty(false);
-    toast('Timetable saved. Your leave options are ready to check.');
+    toast('Timetable saved. You can check days off now.');
   } catch {
     setDirty(false);
-    $('timetable-save-status').textContent = 'Saved for this session only — browser storage is unavailable.';
-    toast('Timetable works now, but could not be saved across visits.');
+    $('timetable-save-status').textContent = 'Saved for this visit only. Your browser would not save it for next time.';
+    toast('The timetable works for this visit, but it will be gone when you leave the page.');
   }
   renderPlanner();
 });
 $('import-timetable').addEventListener('click', async () => {
-  if (!state.token || !state.semester) { toast('Load your semester attendance first.'); return; }
-  if ((state.dirty || state.saved) && !await confirmAction('Importing Etlab replaces the draft week, not your saved week. Unrecognised subjects remain unassigned. Review it before saving.')) return;
+  if (!state.token || !state.semester) { toast('Load attendance for a semester first.'); return; }
+  if ((state.dirty || state.saved) && !await confirmAction('Importing from Etlab will replace the timetable you are editing. Your last saved version stays untouched until you save again. Check any unassigned subjects before saving.')) return;
   $('import-timetable').disabled = true;
   try {
     state.imported = await request('/api/timetable');
@@ -702,7 +702,7 @@ $('import-timetable').addEventListener('click', async () => {
     setDirty();
     renderTimetable();
     renderAttendance();
-    toast('Imported into the draft. Review all days, including weekends, then save.');
+    toast('Timetable imported. Check every day, including weekends, before you save it.');
   } catch (error) { if (state.token) toast(error.message); }
   finally { $('import-timetable').disabled = false; }
 });
@@ -713,7 +713,7 @@ $('planner-days').addEventListener('click', event => {
   if (state.selections.get(date) === leave) state.selections.delete(date);
   else state.selections.set(date, leave);
   renderPlanner();
-  announce(`${state.selections.size} leave dates selected. Combined impact recalculated.`);
+  announce(`${state.selections.size} ${state.selections.size === 1 ? 'date' : 'dates'} selected. Attendance updated.`);
 });
 $('selected-plan').addEventListener('click', event => {
   const button = event.target.closest('[data-remove-date]');
@@ -725,7 +725,7 @@ $('clear-plan').addEventListener('click', () => { state.selections.clear(); rend
 $('plan-start').min = localDate();
 $('plan-start').value = plannerStartDate(localDate());
 $('plan-start').addEventListener('change', () => {
-  if (!$('plan-start').value || $('plan-start').value < localDate()) { toast('Choose today or a future start date.'); $('plan-start').value = plannerStartDate(localDate()); }
+  if (!$('plan-start').value || $('plan-start').value < localDate()) { toast('Pick today or a later date.'); $('plan-start').value = plannerStartDate(localDate()); }
   state.selections.clear();
   renderPlanner();
 });
@@ -733,7 +733,7 @@ window.addEventListener('beforeunload', event => {
   if (state.dirty && state.token) { event.preventDefault(); event.returnValue = ''; }
 });
 window.addEventListener('pagehide', () => { state.token = null; $('password').value = ''; });
-window.addEventListener('pageshow', event => { if (event.persisted) resetSession('Please sign in again after returning to this page.'); });
+window.addEventListener('pageshow', event => { if (event.persisted) resetSession('You came back to an old page, so please sign in again.'); });
 renderOnboarding();
 if (typeof $('onboarding-dialog').showModal === 'function') $('onboarding-dialog').showModal();
 else $('onboarding-dialog').setAttribute('open', '');

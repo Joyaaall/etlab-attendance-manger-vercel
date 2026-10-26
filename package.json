@@ -4,6 +4,7 @@
   "private": true,
   "description": "A privacy-conscious Etlab attendance dashboard and leave planner.",
   "scripts": {
+    "dev": "python3 dev.py",
     "test": "npm run test:unit",
     "test:unit": "node --test tests/attendance-math.test.mjs tests/api-client.test.mjs",
     "test:browser": "node --test tests/browser.test.mjs"
