@@ -134,11 +134,13 @@ test('onboarding is styled and contained on a short tablet viewport', async () =
 test('username login reaches per-subject attendance, and no credentials are persisted', async () => {
   const { context, page, requests, errors } = await openFixture();
   try {
-    assert.equal(await page.title(), 'Attendance Manager for Etlab');
+    assert.equal(await page.title(), 'Collegeil Pono | Etlab Attendance Manager');
+    assert.equal(await page.locator('#public-info').isVisible(), true);
     assert.equal(await page.locator('a[href*="apidocs"], #formula-button, #formula-note, .connection-note').count(), 0);
     assert.match(await page.locator('#login-screen .wordmark').innerText(), /Attendance Manager/);
     await signIn(page);
     assert.match(await page.locator('.app-header .wordmark').innerText(), /Attendance Manager/);
+    assert.equal(await page.locator('#public-info').isVisible(), false);
     assert.equal(await page.locator('#semester').inputValue(), '5');
     assert.equal(await page.locator('#subject-rows tr').count(), 5);
     assert.match(await page.locator('[data-subject="CST501"]').innerText(), /4 hours/);

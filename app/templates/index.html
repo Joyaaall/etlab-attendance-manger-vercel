@@ -4,8 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1746d1">
-  <meta name="description" content="Check your Etlab attendance by subject, build your timetable, and see how a day off would affect your percentage.">
-  <title>Attendance Manager for Etlab</title>
+  <meta name="description" content="Collegeil Pono is an independent Etlab attendance manager. Check subject-wise attendance, calculate your 75% margin, and plan full-day or afternoon leave.">
+  <title>Collegeil Pono | Etlab Attendance Manager</title>
+  <link rel="canonical" href="https://collegepono.vercel.app/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Collegeil Pono">
+  <meta property="og:title" content="Collegeil Pono | Etlab Attendance Manager">
+  <meta property="og:description" content="Check attendance by subject, calculate your margin, and see how a day off affects your Etlab attendance.">
+  <meta property="og:url" content="https://collegepono.vercel.app/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Collegeil Pono | Etlab Attendance Manager">
+  <meta name="twitter:description" content="Subject-wise attendance and leave planning for students using Etlab.">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://collegepono.vercel.app/#website","url":"https://collegepono.vercel.app/","name":"Collegeil Pono","alternateName":["College Pono","Etlab Attendance Manager"],"inLanguage":"en"},{"@type":"SoftwareApplication","@id":"https://collegepono.vercel.app/#app","name":"Collegeil Pono","url":"https://collegepono.vercel.app/","applicationCategory":"EducationalApplication","operatingSystem":"Web browser","description":"An independent Etlab attendance manager for subject-wise attendance, timetable setup, and full-day or afternoon leave calculations."}]}</script>
   <link rel="icon" href="/static/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/dashboard.css">
   <script type="module" src="/static/dashboard.mjs"></script>
@@ -20,9 +32,9 @@
     <div class="login-story">
       <a class="wordmark light" href="/" aria-label="Attendance Manager home"><span class="brand-mark" aria-hidden="true">a.</span>Attendance Manager<span class="wordmark-tag">ETLAB</span></a>
       <div class="story-copy">
-        <p class="story-kicker">Margin Club</p>
+        <p class="story-kicker">Collegeil Pono</p>
         <h1>Can I take a<br>day <em>OFF?</em></h1>
-        <p>See where you stand before you miss a class. Your login stays in this session.</p>
+        <p>Your Etlab attendance manager. Check each subject before you miss a class. Your login stays in this session.</p>
       </div>
       <div class="story-art" aria-hidden="true"><div class="target-ring ring-one"></div><div class="target-ring ring-two"></div><div class="target-ring ring-three"></div><div class="art-stamp">DO<br>THE MATH</div></div>
       <div class="story-bottom"><span>Hours you can miss</span><span>Plans based on your timetable</span></div>
@@ -59,6 +71,21 @@
       </div>
       <div class="login-footer"><span>Use the numbers before you decide.</span><a class="support-link" href="https://buymeacoffee.com/joyalaliyas" target="_blank" rel="noopener noreferrer">Buy me a coffee</a></div>
     </div>
+  </section>
+
+  <section id="public-info" class="public-info" aria-labelledby="about-title">
+    <h2 id="about-title">Collegeil Pono: an Etlab attendance manager.</h2>
+    <p>Collegeil pono? Check the numbers before you decide. Collegeil Pono helps students using Etlab see their attendance by subject, work out how many classes they can miss, and compare a full day off with an afternoon off.</p>
+    <p>Choose your college's Etlab portal above and sign in with your usual student login. The app reads your recorded attendance; it does not change your college records. It is an independent student project, not an official Etlab or college service.</p>
+    <h3>How many classes can I miss at 75% attendance?</h3>
+    <p>The answer depends on each subject's present and conducted hours. For example, 30 attended hours out of 36 lets you miss 4 more hours and finish at exactly 75%. A subject already at 75% has no hours to spare. You can change the target to match the percentage you want to check; 75% is a calculator default, not a claim about your college's rules.</p>
+    <h3>Can I plan leave using my timetable?</h3>
+    <p>Import your Etlab timetable or build a weekly timetable yourself. The leave planner checks full-day and after-lunch options across the next 14 days. If you select several dates, they share the same subject-wise attendance budget. Missing attendance or unassigned timetable periods block the affected option.</p>
+    <h3>Does the app save my Etlab password?</h3>
+    <p>No. Your password is used to sign in to your selected portal and is not saved by the application. Your active session stays in browser memory and clears when you refresh or sign out. Only your timetable and attendance-target preferences are saved in this browser.</p>
+    <h3>Is a leave calculation permission to skip class?</h3>
+    <p>No. These estimates use your current attendance and saved timetable. They do not count future classes you might attend or account for holidays, special schedules, mandatory labs, exemptions, or college-specific rounding. Check your official records and college rules before taking leave.</p>
+    <a class="button secondary" href="#portal-url">Check my Etlab attendance</a>
   </section>
 
   <div id="workspace" class="workspace" hidden>

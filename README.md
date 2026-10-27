@@ -153,6 +153,21 @@ Browser tests use synthetic, intercepted Etlab responses and do not require a re
 
 The secret must remain stable across serverless instances. The application refuses to start on Vercel when it is missing.
 
+## Search discovery
+
+The public site is [Collegeil Pono — Etlab Attendance Manager](https://collegepono.vercel.app/).
+Its homepage includes server-rendered product information, canonical metadata, and WebSite/SoftwareApplication structured data. `/robots.txt` allows the homepage and assets; `/sitemap.xml` lists the public homepage only. API responses carry `X-Robots-Tag: noindex, nofollow`.
+
+After deploying:
+
+1. Add `https://collegepono.vercel.app/` as a **URL-prefix property** in [Google Search Console](https://search.google.com/search-console/).
+2. Choose **HTML tag** verification and copy only the tag's `content` value into the Vercel environment variable `GOOGLE_SITE_VERIFICATION`. Redeploy, then click Verify in Search Console.
+3. Submit `https://collegepono.vercel.app/sitemap.xml` in Sitemaps.
+4. Inspect `https://collegepono.vercel.app/`, run **Test live URL**, and select **Request indexing** if the live test is eligible.
+5. Check Page indexing for Google's actual exclusion reason and monitor Performance for search queries and impressions.
+
+Use natural links to the public URL from the GitHub repository, portfolio, and relevant student resources. A sitemap or indexing request does not guarantee indexing or a particular ranking. Do not submit authenticated API routes or student records. If the production domain changes, update canonical, social and structured-data URLs, robots, and sitemap together.
+
 ## Limitations
 
 - The planner cannot know holidays, special timetables, attendance exemptions, mandatory labs, or institution-specific rounding rules.

@@ -116,6 +116,7 @@ function resetSession(message = '') {
   $('toggle-password').setAttribute('aria-label', 'Show password');
   $('workspace').hidden = true;
   $('login-screen').hidden = false;
+  $('public-info').hidden = false;
   if (state.portalUrl) showCredentialsStep(); else showPortalStep();
   $('subject-rows').replaceChildren();
   $('timetable-body').replaceChildren();
@@ -340,6 +341,7 @@ async function bootstrap() {
   state.semester = Number.isInteger(meta?.current) && options.some(option => option.value === meta.current) ? meta.current : null;
   select.value = state.semester || '';
   $('login-screen').hidden = true;
+  $('public-info').hidden = true;
   $('workspace').hidden = false;
   showView('attendance');
   const messages = [];

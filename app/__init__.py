@@ -23,6 +23,8 @@ def create_app(*, serve_static=False):
     def protect_browser_responses(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "same-origin"
+        if request.path.startswith(("/api/", "/apidocs", "/apispec", "/flasgger_static/")):
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if request.path == "/" or request.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store"
         if request.path == "/":

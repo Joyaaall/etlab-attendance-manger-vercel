@@ -36,7 +36,7 @@ class FrontendTests(unittest.TestCase):
 
     def test_dashboard_branding_and_removed_interface_elements(self):
         html = self.client.get("/").get_data(as_text=True)
-        self.assertIn('<title>Attendance Manager for Etlab</title>', html)
+        self.assertIn('<title>Collegeil Pono | Etlab Attendance Manager</title>', html)
         self.assertEqual(html.count('aria-label="Attendance Manager home"'), 2)
         self.assertNotIn('rollcall', html.lower())
         self.assertNotIn('ETLAB × ASIET', html)
